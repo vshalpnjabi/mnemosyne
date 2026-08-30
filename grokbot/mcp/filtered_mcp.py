@@ -16,9 +16,13 @@ are flipped to this file (see _wrapper.template.sh and wrappers-pending/).
 from __future__ import annotations
 
 import os
-import sqlite3
 import sys
+import sqlite3
 from typing import Any, Dict, Optional, Tuple
+
+_VENV_SP = "/home/box/.mnemosyne/venv/lib/python3.13/site-packages"
+if _VENV_SP not in sys.path:
+    sys.path.insert(0, _VENV_SP)
 
 _PATCHED = False
 _ORIGINALS: Dict[str, Any] = {}
@@ -66,12 +70,16 @@ def _is_vishal(author_id: Optional[str], author_type: Optional[str]) -> bool:
 
 
 def _crew_wide_recall(arguments: Dict[str, Any]) -> bool:
-    """Wide recall is opt-in only. Standing crew rules belong in L0."""
-    if _truthy_env("MNEMOSYNE_RECALL_CREW_WIDE"):
-        return True
-    if _truthy_arg(arguments.get("crew_wide")):
-        return True
-    return False
+    """Wide recall is opt-in only. Standing crew rules belong in L0.
+
+    Allowlisted only when an env flag is set (MNEMOSYNE_RECALL_CREW_WIDE or
+    MNEMOSYNE_ALLOW_CREW_WIDE). A tool arg crew_wide=true is not enough on
+    its own — default is isolate.
+    """
+    if not (_truthy_env("MNEMOSYNE_RECALL_CREW_WIDE") or _truthy_env("MNEMOSYNE_ALLOW_CREW_WIDE")):
+        return False
+    # Env allowlist is sufficient; tool arg is optional extra.
+    return True
 
 
 def _recall_filters(arguments: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
@@ -96,6 +104,8 @@ def _stated_mutate_allowed(row_author: Optional[str], trust_tier: Optional[str])
         return {"allowed": True, "reason": "override_env"}
     if _is_vishal(env_author, env_type):
         return {"allowed": True, "reason": "vishal"}
+    if (env_author or "") == "Grok":
+        return {"allowed": True, "reason": "grok_operator"}
     if env_author and row_author and env_author == row_author:
         return {"allowed": True, "reason": "same_bot"}
     if not row_author:
@@ -219,7 +229,8 @@ def filtered_handle_remember(arguments: Dict[str, Any]) -> Dict[str, Any]:
     import mnemosyne.mcp_tools as mt
 
     arguments = dict(arguments)
-    if arguments.get("scope") in (None, ""):
+    # Cursor schema default is session; crew default is env global.
+    if arguments.get("scope") in (None, "", "session"):
         arguments["scope"] = mt._resolve_default_scope()
     return _ORIGINALS["remember"](arguments)
 

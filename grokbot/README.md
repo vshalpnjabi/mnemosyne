@@ -2,6 +2,8 @@
 
 Thin in-process monkeypatch around stock `mnemosyne-memory` 3.15.1. Does **not** patch site-packages. Does **not** flip live wrappers until the Grok-vs-Hacka smoke test passes.
 
+GitHub overlay directory: `grokbot/` (not `crew/`) on branch `crew-v3.15.1`: https://github.com/vshalpnjabi/mnemosyne
+
 ## Unflipped (today)
 
 Live `/workspace/mcp/mnemosyne/<Bot>.sh` still:

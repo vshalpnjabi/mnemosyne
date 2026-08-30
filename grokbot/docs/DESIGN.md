@@ -28,6 +28,7 @@ Crew package is **mnemosyne-memory 3.15.1**.
 - Repo: https://github.com/vshalpnjabi/mnemosyne
 - Branch to stay on: `crew-v3.15.1`
 - Tag: `v3.15.1`
+- Overlay directory: `grokbot/` (not `crew/`). Customizations only there. Path rename: https://github.com/vshalpnjabi/mnemosyne/commit/100178838cca0aad8e3e03425a0905acd8cae73b
 - Do **not** develop on `v4.0.0b1`.
 - Do **not** clone that git into this box as part of bot work.
 - Do **not** patch site-packages. Isolation is process-local monkeypatch in `/workspace/mcp/mnemosyne/filtered_mcp.py`.
@@ -330,3 +331,4 @@ No new sqlite. Same data dir, identity env, filtered MCP, brief BOT-GUIDE. Stand
 ## Status
 
 Filtered MCP + unit tests exist. Live wrappers still per-bot stock `mnemosyne mcp`. Shared bank is **not** created, wrappers are **not** rewired, old DBs still live, until Vishal signs off and smoke passes. Do not migrate DBs in this docs pass.
+

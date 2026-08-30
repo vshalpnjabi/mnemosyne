@@ -19,7 +19,7 @@ Architecture: DESIGN.md. Bot behavior: BOT-GUIDE.md.
 - **Canonical clobber** is a data issue, not a backup bug: merge by `memory_id` still keeps both working rows; canonical slots remain one-per-name in the sqlite.
 - **Stats/recall leaks** do not change the rotate: export is the whole sqlite. Isolation is an MCP recall problem, not a JSON snapshot problem.
 - **Session `mcp_<bank>`** does not belong in Dropbox. Do not export WAL or scratchpad as sqlite.
-- **GitHub:** stay on https://github.com/vshalpnjabi/mnemosyne `crew-v3.15.1` / tag `v3.15.1`. Do not patch the venv to “fix” export.
+- **GitHub:** stay on https://github.com/vshalpnjabi/mnemosyne `crew-v3.15.1` / tag `v3.15.1`. Overlay directory: `grokbot/` (not `crew/`). Do not patch the venv to “fix” export.
 
 ## Paths (this folder)
 
@@ -58,3 +58,4 @@ If current exists and there is no next file, copy current to the dated backup na
 ## New bot
 
 Do not create `/Agents/<Name>/memory/` for live dumps. This shared snapshot folder is enough. Isolation is `author_id` / `channel_id` inside the bank. See DESIGN.md.
+

@@ -161,3 +161,4 @@ Bad (skip or rewrite):
 ## New bot (Grok)
 
 Wire a wrapper to the same `vishalpunjabi` data dir with that bot’s identity env, **filtered** MCP entrypoint (`filtered_mcp.py` — after smoke; until then live `<Bot>.sh` stays stock), add the MCP server, set instructions to this guide, persist standing rules to L0. Do not create `/Agents/<Name>/memory/` as a live dump folder. Full wiring: DESIGN.md.
+

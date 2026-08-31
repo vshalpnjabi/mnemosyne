@@ -11,6 +11,10 @@ This process-local monkeypatch does not touch site-packages. Live
 /workspace/mcp/mnemosyne/<Bot>.sh wrappers still exec raw
 `mnemosyne mcp` until the Grok-vs-Hacka smoke test passes and wrappers
 are flipped to this file (see _wrapper.template.sh and wrappers-pending/).
+
+mnemosyne_export is also wrapped: stock 3.15.1 writes a short column
+allowlist; the wrap rewrites working_memory and episodic_memory from
+SELECT * so isolation fields survive MCP backups.
 """
 
 from __future__ import annotations
@@ -23,6 +27,12 @@ from typing import Any, Dict, Optional, Tuple
 _VENV_SP = "/home/box/.mnemosyne/venv/lib/python3.13/site-packages"
 if _VENV_SP not in sys.path:
     sys.path.insert(0, _VENV_SP)
+
+_MCP_DIR = os.path.dirname(os.path.abspath(__file__))
+if _MCP_DIR not in sys.path:
+    sys.path.insert(0, _MCP_DIR)
+
+from full_export import rewrite_export_memory_tables  # noqa: E402
 
 _PATCHED = False
 _ORIGINALS: Dict[str, Any] = {}
@@ -336,6 +346,48 @@ def filtered_handle_validate(arguments: Dict[str, Any]) -> Dict[str, Any]:
     return _ORIGINALS["validate"](arguments)
 
 
+def filtered_handle_export(arguments: Dict[str, Any]) -> Dict[str, Any]:
+    """Stock export, then rewrite working/episodic JSON from SELECT *.
+
+    Whole-bank on purpose (backup rotate). Not author-filtered. Domain
+    bots should still not call this. Stock 3.15.1 omits isolation
+    columns; this wrap makes the written file match sqlite.
+    """
+    import mnemosyne.mcp_tools as mt
+
+    result = _ORIGINALS["export"](arguments)
+    if result.get("error"):
+        return result
+    output_path = arguments.get("output_path") or result.get("path") or ""
+    if isinstance(output_path, str):
+        output_path = output_path.strip()
+    else:
+        output_path = str(output_path).strip()
+    if not output_path:
+        return {
+            "error": "full_column_export_failed",
+            "message": "export succeeded without an output_path",
+            "stock": result,
+        }
+    bank = mt._resolve_bank(arguments)
+    mem = mt._create_instance(
+        author_id=arguments.get("author_id"),
+        author_type=arguments.get("author_type"),
+        channel_id=arguments.get("channel_id"),
+        bank=bank,
+    )
+    try:
+        rewrite_export_memory_tables(mem.db_path, output_path)
+    except Exception as exc:
+        return {
+            "error": "full_column_export_failed",
+            "message": str(exc),
+            "path": output_path,
+            "stock": result,
+        }
+    return result
+
+
 _HANDLER_MAP = {
     "mnemosyne_recall": ("recall", filtered_handle_recall),
     "mnemosyne_remember": ("remember", filtered_handle_remember),
@@ -343,6 +395,7 @@ _HANDLER_MAP = {
     "mnemosyne_stats": ("stats", filtered_handle_stats),
     "mnemosyne_get": ("get", filtered_handle_get),
     "mnemosyne_validate": ("validate", filtered_handle_validate),
+    "mnemosyne_export": ("export", filtered_handle_export),
 }
 
 _STOCK_ATTR = {
@@ -352,6 +405,7 @@ _STOCK_ATTR = {
     "stats": "_handle_stats",
     "get": "_handle_get",
     "validate": "_handle_validate",
+    "export": "_handle_export",
 }
 
 

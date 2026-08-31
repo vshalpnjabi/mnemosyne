@@ -212,6 +212,7 @@ Shebang: `/home/box/.mnemosyne/venv/bin/python`.
 | `mnemosyne_stats` | `get_stats(author_id=env, channel_id=env)`. Headline `total_memories` is scoped. |
 | `mnemosyne_get` | Other authors’ / other channels’ rows → `not_found`. |
 | `mnemosyne_validate` | STATED `update`/`invalidate`/`delete` refused unless same-bot, Vishal, or `MNEMOSYNE_ALLOW_CROSS_AUTHOR_STATED_MUTATE=1`. `attest` still allowed. |
+| `mnemosyne_export` | Whole-bank (not author-filtered). After stock writes the file, rewrite `working_memory` and `episodic_memory` from `SELECT *` so isolation fields and remaining sqlite columns survive. |
 
 Intended recall filter (actual code):
 
@@ -283,13 +284,13 @@ Unit stand-in (no network, LLM off, temp sqlite; does not flip anything):
 
 ## Remaining leak holes (documented, not wrapped)
 
-`filtered_mcp.py` does **not** patch these. Treat them as cross-author until a later wrap. Domain bots should not call them.
+`filtered_mcp.py` does **not** author-filter these. Treat them as cross-author until a later wrap. Domain bots should not call them.
 
 - **canonical** `remember_canonical` / `recall_canonical`: bank-global `(category, name)` clobber. Policy: Vishal identity card only.
 - **graph_query / graph_link**: graph is not author-scoped. Related ids/content can leak.
 - **triple_add / triple_query**: triples are not author-scoped.
 - **hygiene_audit / hygiene_clean**: whole-DB noise scan / clean. Content of other authors can appear.
-- **export**: whole bank. Needed for backup rotate; do not run from domain bots.
+- **export**: whole bank (not author-filtered). Wrapped so JSON working/episodic rows are `SELECT *` (includes `author_id`, `author_type`, `channel_id`, `trust_tier`, and remaining sqlite columns). Needed for backup rotate; do not run from domain bots.
 - **forget / update / invalidate** (direct tools by id): bypass the STATED validate guard. Can mutate another author’s row if you have the id.
 - **scratchpad** read/write/clear: session `mcp_<bank>`, no author column.
 - **sleep / sleep_all_sessions**: consolidates the whole bank. Cron/Grok job, not a bot recall path.

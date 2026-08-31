@@ -6,6 +6,7 @@ entrypoint applies. No network. LLM off. Does not edit the venv.
 
 from __future__ import annotations
 
+import json
 import os
 import sqlite3
 import sys
@@ -23,7 +24,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import filtered_mcp  # noqa: E402  (patches mcp_tools on import)
+import full_export  # noqa: E402
 import mnemosyne.mcp_tools as mcp_tools  # noqa: E402
+
+_ISOLATION_COLS = ("author_id", "author_type", "channel_id", "trust_tier")
 
 
 PHRASE_A = "zx9q7f3a purple durian espresso is Grok isolation canary beverage"
@@ -55,6 +59,49 @@ def _fetch_row(memory_id: str) -> sqlite3.Row:
             (memory_id,),
         ).fetchone()
         return row
+    finally:
+        conn.close()
+
+
+def _connect() -> sqlite3.Connection:
+    conn = sqlite3.connect(str(_db_path()))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _insert_episodic(
+    memory_id: str,
+    *,
+    author_id: str,
+    channel_id: str,
+    trust_tier: str = "DERIVED",
+    blob: bytes = b"\x00\x01\xff",
+) -> None:
+    conn = _connect()
+    try:
+        conn.execute(
+            "INSERT INTO episodic_memory ("
+            "id, content, source, timestamp, session_id, importance, "
+            "scope, author_id, author_type, channel_id, trust_tier, "
+            "veracity, binary_vector"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                memory_id,
+                "episodic isolation canary for full-column export",
+                "sleep_consolidation",
+                "2026-08-31T00:00:00",
+                "mcp_default",
+                0.6,
+                "global",
+                author_id,
+                "agent",
+                channel_id,
+                trust_tier,
+                "inferred",
+                blob,
+            ),
+        )
+        conn.commit()
     finally:
         conn.close()
 
@@ -191,6 +238,121 @@ class FilteredMcpTests(unittest.TestCase):
             or -1
         )
         self.assertEqual(hacka_total, 1, f"Hacka stats leaked Grok: {hacka_stats}")
+
+    def test_export_json_rows_match_all_sqlite_columns(self) -> None:
+        """mnemosyne_export working/episodic rows include every sqlite column."""
+        _set_author("Grok")
+        stored = mcp_tools._handle_remember(
+            {
+                "content": PHRASE_A,
+                "source": "user",
+                "veracity": "stated",
+                "importance": 0.9,
+            }
+        )
+        self.assertEqual(stored.get("status"), "stored", stored)
+        working_id = stored["memory_id"]
+        episodic_id = "ep-full-column-export-canary"
+        _insert_episodic(
+            episodic_id,
+            author_id="Grok",
+            channel_id="grokbot:Grok",
+            trust_tier="DERIVED",
+        )
+
+        self.assertIs(
+            mcp_tools._TOOL_HANDLERS["mnemosyne_export"],
+            filtered_mcp.filtered_handle_export,
+        )
+
+        export_path = Path(self._tmpdir.name) / "full-export.json"
+        result = mcp_tools._handle_export({"output_path": str(export_path)})
+        self.assertNotIn("error", result, result)
+        self.assertEqual(result.get("status"), "exported", result)
+        payload = json.loads(export_path.read_text(encoding="utf-8"))
+        self.assertTrue(
+            (payload.get("mnemosyne_export") or {}).get("crew_full_columns"),
+            payload.get("mnemosyne_export"),
+        )
+
+        conn = _connect()
+        try:
+            for table, expected_id in (
+                ("working_memory", working_id),
+                ("episodic_memory", episodic_id),
+            ):
+                columns = full_export.table_column_names(conn, table)
+                for required in _ISOLATION_COLS:
+                    self.assertIn(required, columns, f"{table} schema missing {required}")
+                sqlite_row = conn.execute(
+                    f"SELECT * FROM {table} WHERE id = ?",
+                    (expected_id,),
+                ).fetchone()
+                self.assertIsNotNone(sqlite_row, f"{table} missing {expected_id}")
+                export_rows = {
+                    row.get("id"): row for row in payload.get(table) or []
+                }
+                self.assertIn(expected_id, export_rows, f"{table} absent from export")
+                export_row = export_rows[expected_id]
+                for column in columns:
+                    self.assertIn(
+                        column,
+                        export_row,
+                        f"{table} export dropped {column}: {sorted(export_row)}",
+                    )
+                mismatches = full_export.sqlite_row_matches_export(
+                    sqlite_row, export_row, columns
+                )
+                self.assertEqual(
+                    mismatches,
+                    [],
+                    f"{table} sqlite/export mismatch on {mismatches}: "
+                    f"sqlite={[ (c, sqlite_row[c]) for c in mismatches ]} "
+                    f"export={[ (c, export_row.get(c)) for c in mismatches ]}",
+                )
+                self.assertEqual(export_row["author_id"], "Grok")
+                self.assertEqual(export_row["author_type"], "agent")
+                self.assertEqual(export_row["channel_id"], "grokbot:Grok")
+        finally:
+            conn.close()
+
+        working_row = next(
+            row for row in payload["working_memory"] if row["id"] == working_id
+        )
+        self.assertTrue(working_row.get("trust_tier"), working_row)
+        episodic_row = next(
+            row for row in payload["episodic_memory"] if row["id"] == episodic_id
+        )
+        self.assertEqual(episodic_row["trust_tier"], "DERIVED")
+        self.assertEqual(episodic_row["binary_vector"], [0, 1, 255])
+
+    def test_stock_export_omits_isolation_columns(self) -> None:
+        """Document the 3.15.1 allowlist hole the wrap exists to close."""
+        _set_author("Grok")
+        stored = mcp_tools._handle_remember(
+            {
+                "content": PHRASE_A,
+                "source": "user",
+                "veracity": "stated",
+            }
+        )
+        self.assertEqual(stored.get("status"), "stored", stored)
+        stock_path = Path(self._tmpdir.name) / "stock-export.json"
+        stock = filtered_mcp._ORIGINALS["export"]({"output_path": str(stock_path)})
+        self.assertNotIn("error", stock, stock)
+        payload = json.loads(stock_path.read_text(encoding="utf-8"))
+        stock_row = next(
+            row
+            for row in payload.get("working_memory") or []
+            if row.get("id") == stored["memory_id"]
+        )
+        omitted = [col for col in _ISOLATION_COLS if col not in stock_row]
+        self.assertEqual(
+            omitted,
+            list(_ISOLATION_COLS),
+            f"stock 3.15.1 export was expected to omit isolation cols; "
+            f"got keys {sorted(stock_row)}",
+        )
 
 
 if __name__ == "__main__":

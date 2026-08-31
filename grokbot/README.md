@@ -65,10 +65,11 @@ Prefer the venv interpreter when the environment allows:
 | `mnemosyne_stats` | Beam working/episodic counts filtered to this author. Headline `total_memories` is scoped. |
 | `mnemosyne_get` | Other authors’ rows → `not_found`. |
 | `mnemosyne_validate` | `STATED` update/invalidate/delete refused unless same `author_id`, Vishal (`human` / known ids), or `MNEMOSYNE_ALLOW_CROSS_AUTHOR_STATED_MUTATE=1`. `attest` still allowed. |
+| `mnemosyne_export` | Whole-bank. Rewrites working/episodic JSON from `SELECT *` so isolation fields match sqlite. |
 
 ## Remaining holes (documented, not wrapped)
 
-`graph_query`, `hygiene_audit` / `hygiene_clean`, `export`, `triple_*`, `forget` / `update` / `invalidate` by id, canonical `(category, name)` bank-global clobber, Hermes `mnemosyne_shared_*`. See Dropbox `DESIGN.md`.
+`graph_query`, `hygiene_audit` / `hygiene_clean`, `triple_*`, `forget` / `update` / `invalidate` by id, canonical `(category, name)` bank-global clobber, Hermes `mnemosyne_shared_*`. Export is wrapped for full columns but still whole-bank. See Dropbox `DESIGN.md`.
 
 ## Do not
 

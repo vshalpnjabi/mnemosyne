@@ -123,7 +123,7 @@ Do not use `crew_wide` / `MNEMOSYNE_RECALL_CREW_WIDE` unless Vishal asked for a 
 - Do not create a second sqlite for yourself.
 - Do not treat L1 as a cache of Todoist/Notion/Gmail.
 - Do not duplicate L0 standing rules or L2 live lists into L1 as STATED.
-- Do not call unwrapped leak tools (`graph_query`, `hygiene_*`, `export`, `triple_*`) as a substitute for recall.
+- Do not call whole-bank leak tools (`graph_query`, `hygiene_*`, `export`, `triple_*`) as a substitute for recall. Export is wrapped for full-column backups, not for domain-bot recall.
 - Do not patch `/home/box/.mnemosyne/venv`. Do not develop on `v4.0.0b1`. Stay on tag `v3.15.1` / branch `crew-v3.15.1` (https://github.com/vshalpnjabi/mnemosyne).
 
 ## Examples of good memory text

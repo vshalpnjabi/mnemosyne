@@ -13,7 +13,7 @@ Architecture: DESIGN.md. Bot behavior: BOT-GUIDE.md.
 - **No live sqlite in Dropbox.** Never upload `.db`, `-wal`, `-shm`. WAL / multi-writer previously froze a 52MB WAL. JSON only.
 - **No dual-write.** After flip, backup the shared bank only. Do not also dump per-bot DBs as “current.” Until flip, do not invent a dual-write to the not-yet-shared path.
 - **Export is whole-bank.** `mnemosyne_export` is not author-filtered. `filtered_mcp.py` wraps it so JSON `working_memory` / `episodic_memory` rows are `SELECT *` (includes `author_id`, `author_type`, `channel_id`, `trust_tier`, and remaining sqlite columns). That is for this rotate (Grok/backup dumps the whole bank). Domain bots must not export. Grok's direct sqlite-to-Dropbox v2 dump is a separate complete path.
-- **Smoke test gate.** Do not switch the 11:31 job to the shared folder until Grok-vs-Hacka isolation smoke passes (Grok unique STATED; Hacka recall empty; Grok finds it). See DESIGN.md.
+- **Smoke test gate.** Do not switch the 11:31 job to the shared folder until Grok-vs-Hacky isolation smoke passes (Grok unique STATED; Hacky recall empty; Grok finds it). See DESIGN.md.
 - **Busy timeout.** Export with `MNEMOSYNE_BUSY_TIMEOUT_MS=15000` and `MNEMOSYNE_LLM_ENABLED=false`. One writer.
 - **LLM off.** Do not enable embeddings extras for export.
 - **Canonical clobber** is a data issue, not a backup bug: merge by `memory_id` still keeps both working rows; canonical slots remain one-per-name in the sqlite.

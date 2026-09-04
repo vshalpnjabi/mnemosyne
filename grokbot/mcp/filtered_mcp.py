@@ -9,7 +9,7 @@ sqlite + session mcp_<bank> means every bot sees every row.
 
 This process-local monkeypatch does not touch site-packages. Live
 /workspace/mcp/mnemosyne/<Bot>.sh wrappers still exec raw
-`mnemosyne mcp` until the Grok-vs-Hacka smoke test passes and wrappers
+`mnemosyne mcp` until the Grok-vs-Hacky smoke test passes and wrappers
 are flipped to this file (see _wrapper.template.sh and wrappers-pending/).
 
 mnemosyne_export is also wrapped: stock 3.15.1 writes a short column

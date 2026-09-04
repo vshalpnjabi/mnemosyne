@@ -31,7 +31,7 @@ _ISOLATION_COLS = ("author_id", "author_type", "channel_id", "trust_tier")
 
 
 PHRASE_A = "zx9q7f3a purple durian espresso is Grok isolation canary beverage"
-PHRASE_B = "qm4w2c8n indigo jackfruit cortado is Hacka isolation canary beverage"
+PHRASE_B = "qm4w2c8n indigo jackfruit cortado is Hacky isolation canary beverage"
 
 
 def _set_author(name: str) -> None:
@@ -136,21 +136,21 @@ class FilteredMcpTests(unittest.TestCase):
         self.assertEqual(stored.get("status"), "stored", stored)
         self.assertTrue(stored.get("memory_id"), stored)
 
-        _set_author("Hacka")
-        hacka = mcp_tools._handle_recall({"query": PHRASE_A, "limit": 10})
-        self.assertEqual(hacka.get("status"), "ok", hacka)
+        _set_author("Hacky")
+        hacky = mcp_tools._handle_recall({"query": PHRASE_A, "limit": 10})
+        self.assertEqual(hacky.get("status"), "ok", hacky)
         blob = " ".join(
-            str(r.get("content", "")) for r in hacka.get("results") or []
+            str(r.get("content", "")) for r in hacky.get("results") or []
         )
         self.assertNotIn(
             "zx9q7f3a",
             blob.lower(),
-            f"Hacka must not see Grok's phrase: {hacka}",
+            f"Hacky must not see Grok's phrase: {hacky}",
         )
         self.assertEqual(
-            hacka.get("count"),
+            hacky.get("count"),
             0,
-            f"Hacka recall of Grok phrase should be empty: {hacka}",
+            f"Hacky recall of Grok phrase should be empty: {hacky}",
         )
 
         _set_author("Grok")
@@ -196,7 +196,7 @@ class FilteredMcpTests(unittest.TestCase):
         )
         self.assertEqual(a.get("status"), "stored", a)
 
-        _set_author("Hacka")
+        _set_author("Hacky")
         b = mcp_tools._handle_remember(
             {
                 "content": PHRASE_B,
@@ -222,22 +222,22 @@ class FilteredMcpTests(unittest.TestCase):
         self.assertEqual(
             grok_total,
             1,
-            f"Grok stats must not include Hacka's row: {grok_stats}",
+            f"Grok stats must not include Hacky's row: {grok_stats}",
         )
 
-        _set_author("Hacka")
-        hacka_stats = mcp_tools._handle_stats({})
-        hacka_wm = (
-            (hacka_stats.get("stats") or {})
+        _set_author("Hacky")
+        hacky_stats = mcp_tools._handle_stats({})
+        hacky_wm = (
+            (hacky_stats.get("stats") or {})
             .get("beam", {})
             .get("working_memory", {})
         )
-        hacka_total = int(
-            hacka_wm.get("total")
-            or hacka_stats.get("stats", {}).get("total_memories")
+        hacky_total = int(
+            hacky_wm.get("total")
+            or hacky_stats.get("stats", {}).get("total_memories")
             or -1
         )
-        self.assertEqual(hacka_total, 1, f"Hacka stats leaked Grok: {hacka_stats}")
+        self.assertEqual(hacky_total, 1, f"Hacky stats leaked Grok: {hacky_stats}")
 
     def test_export_json_rows_match_all_sqlite_columns(self) -> None:
         """mnemosyne_export working/episodic rows include every sqlite column."""

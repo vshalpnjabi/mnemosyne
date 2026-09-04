@@ -36,7 +36,7 @@ Do not two-way sync L1 with L2. A new memory integration is L2 unless Grok says 
 
 | Field | Your value |
 |---|---|
-| `author_id` | your bot name (`Grok`, `Hacka`, `Nutri`, …) |
+| `author_id` | your bot name (`Grok`, `Hacky`, `Nutri`, …) |
 | `author_type` | `agent` |
 | `channel_id` | `grokbot:<your name>` |
 | `scope` | `global` (never `session`) |
@@ -67,7 +67,7 @@ Session id is `mcp_<bank>` for every bot on the sqlite. Isolation is author/chan
 - Anything already in L0 (your role, crew standing rules, how to address Vishal as a user of this crew).
 - Live lists that belong in L2 (open Todoist tasks, Notion rows, Gmail threads). A one-line pointer is ok: “Judging tracker lives in Notion page X.”
 - Raw web/email/tool dumps. If you must keep a pointer, `EXTERNAL_WRITE` + `tool`. Never STATED.
-- Another bot’s domain. You are not Hacka; do not remember Hacka’s incident notes as you.
+- Another bot’s domain. You are not Hacky; do not remember Hacky’s incident notes as you.
 - Secrets/PII you would later need to `forget` — avoid storing them.
 
 Importance: 0.8–1.0 for standing prefs and decisions; 0.5 default; low for color that is nice-to-have. Time-bound facts get `valid_until` (`YYYY-MM-DD`).
@@ -146,7 +146,7 @@ Bad (skip or rewrite):
 
 - “ok” / “will do” / “session started”
 - “There are 5 open tasks” (L2 snapshot; will rot)
-- “Hacka found a CVE in X” written by Nutri with Nutri’s author_id as STATED (wrong author, wrong trust)
+- “Hacky found a CVE in X” written by Nutri with Nutri’s author_id as STATED (wrong author, wrong trust)
 - Copy-paste of an email body as STATED
 - “Crew rule: always recall Mnemosyne first” (that is L0, and it is wrong — L0 then L2 then L1)
 - Canonical `preference`/`store` = “Nutri dinner window 7pm” (clobbers Vishal identity card; use working memory)

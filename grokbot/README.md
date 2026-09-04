@@ -1,6 +1,6 @@
 # Crew Mnemosyne filtered MCP
 
-Thin in-process monkeypatch around stock `mnemosyne-memory` 3.15.1. Does **not** patch site-packages. Does **not** flip live wrappers until the Grok-vs-Hacka smoke test passes.
+Thin in-process monkeypatch around stock `mnemosyne-memory` 3.15.1. Does **not** patch site-packages. Does **not** flip live wrappers until the Grok-vs-Hacky smoke test passes.
 
 GitHub overlay directory: `grokbot/` (not `crew/`) on branch `crew-v3.15.1`: https://github.com/vshalpnjabi/mnemosyne
 
@@ -36,7 +36,7 @@ exec /home/box/.mnemosyne/venv/bin/python /workspace/mcp/mnemosyne/filtered_mcp.
 ## Smoke test gate (do not flip until this passes)
 
 1. Grok, through the **filtered** MCP against the shared bank, writes a unique `STATED` row (distinct phrase, `veracity=stated`, `source=user`).
-2. Hacka `mnemosyne_recall` of that exact phrase must return **empty**.
+2. Hacky `mnemosyne_recall` of that exact phrase must return **empty**.
 3. Grok `mnemosyne_recall` of that phrase must **find** it.
 
 If step 2 returns Grok’s row, stop. Live wrappers stay unflipped.

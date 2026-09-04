@@ -18,7 +18,7 @@ Native Grok Bot memory stays L0 (prompt). Mnemosyne is L1 (query). Apps are L2 (
 - Embeddings / LLM extras (`MNEMOSYNE_LLM_ENABLED=false`).
 - Deleting old per-bot DBs or old `/Agents/<Bot>/memory/` folders.
 - Adding mem0 (or any other memory product) as a second L1. If a project needs it, it is L2: query it, do not dual-write.
-- Flipping live wrappers before filtered MCP + Grok-vs-Hacka smoke test.
+- Flipping live wrappers before filtered MCP + Grok-vs-Hacky smoke test.
 - Patching `/home/box/.mnemosyne/venv` (read only). Do not develop on upstream `v4.0.0b1`.
 
 ## GitHub source of truth
@@ -73,7 +73,7 @@ Conflict order: L2 live > L0 for objects that app owns; L0 > L1 for standing how
 ## Vocabulary
 
 - **Bank** — one named sqlite. Ours is `vishalpunjabi`.
-- **author_id** — who wrote the row. Bot display name: `Grok`, `Hacka`, `Nutri`, …
+- **author_id** — who wrote the row. Bot display name: `Grok`, `Hacky`, `Nutri`, …
 - **author_type** — `human` \| `agent` \| `system`. Bots stamp `agent`. Vishal’s notes are `human`. Cron, backups, sleep stamp `system`.
 - **channel_id** — `grokbot:<bot name>` (`grokbot:Grok`).
 - **scope** — always `global`. Never `session` (session id is shared; see bites).
@@ -171,7 +171,7 @@ Do not write to old per-bot DBs and the shared bank at the same time. Flip all w
 
 ### 11. Smoke test gate
 
-Do not flip live wrappers until the Grok-vs-Hacka unique-phrase test passes (below). Unit tests: `/workspace/mcp/mnemosyne/tests/test_filtered_mcp.py`.
+Do not flip live wrappers until the Grok-vs-Hacky unique-phrase test passes (below). Unit tests: `/workspace/mcp/mnemosyne/tests/test_filtered_mcp.py`.
 
 ## Wrapper env (intended after flip)
 
@@ -271,7 +271,7 @@ Copy over live `*.sh` only after import + smoke. Do not flip one bot early.
 ### Smoke test (do not flip until this passes)
 
 1. Grok, through the **filtered** MCP against the shared bank, writes a unique `STATED` row (distinct phrase, `veracity=stated`, `source=user`).
-2. Hacka `mnemosyne_recall` of that exact phrase must return **empty**.
+2. Hacky `mnemosyne_recall` of that exact phrase must return **empty**.
 3. Grok `mnemosyne_recall` of that phrase must **find** it.
 
 If step 2 returns Grok’s row, stop. Live wrappers stay unflipped.
@@ -320,7 +320,7 @@ Write widely / trust narrowly; `valid_until`; invalidate+replace; batch; 15s bus
 1. Create empty `/home/box/agent-memory/vishalpunjabi/` and confirm Dropbox `/Agents/memory/mnemosyne/` (docs already there).
 2. Install the filtered MCP entrypoint (**done**, unflipped). Point wrappers at the shared dir **but do not flip until import+smoke pass**.
 3. Import each old `/home/box/agent-memory/<Bot>/mnemosyne.db` as `IMPORTED` / `imported` with that bot’s `author_id` and `channel_id`. On `memory_id` collision, keep both by assigning a new id to the incoming row (do not drop).
-4. Smoke test isolation (Grok unique STATED; Hacka empty; Grok finds it).
+4. Smoke test isolation (Grok unique STATED; Hacky empty; Grok finds it).
 5. Flip all wrappers in one pass (copy `wrappers-pending/<Bot>.sh` over live `<Bot>.sh`). Brief every bot with BOT-GUIDE.md / skill Mnemosyne bot memory.
 6. Switch 11:31 backup to this folder. Add 3:00am sleep. Seed one dated backup.
 7. Old DBs and `/Agents/<Bot>/memory/` stay archive. No dual-write window.
